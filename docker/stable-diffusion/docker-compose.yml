@@ -1,0 +1,11 @@
+services:
+  xnnpack-onnxstream:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: xnnpack-onnxstream
+    stdin_open: true # Keep STDIN open for interactive input
+    tty: true        # Allocate a pseudo-TTY
+    volumes:
+      - ./output:/home/output # Mount a local directory for output files
+    working_dir: /home
