@@ -1,0 +1,47 @@
+FROM ubuntu:20.04
+
+# Set non-interactive mode for apt-get
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    cmake git-lfs build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+# Define work directory
+WORKDIR /home
+
+# Clone and build XNNPACK
+RUN git clone https://github.com/google/XNNPACK.git && \
+    cd XNNPACK && \
+    git checkout 1c8ee1b68f3a3e0847ec3c53c186c5909fa3fbd3 && \
+    mkdir build && cd build && \
+    cmake -DXNNPACK_BUILD_TESTS=OFF -DXNNPACK_BUILD_BENCHMARKS=OFF .. && \
+    cmake --build . --config Release
+
+# Clone and build OnnxStream
+RUN git clone https://github.com/vitoplantamura/OnnxStream.git && \
+    cd OnnxStream/src && \
+    mkdir build && cd build && \
+    cmake -DMAX_SPEED=ON -DXNNPACK_DIR=/home/XNNPACK .. && \
+    cmake --build . --config Release
+
+# Add the run script
+RUN echo "#!/bin/bash\n\n" \
+         "# Ask the user for the prompt\n" \
+         "read -p \"Enter the prompt: \" user_prompt\n" \
+         "\n" \
+         "# Ask the user for the number of steps\n" \
+         "read -p \"Enter the number of steps: \" steps\n" \
+         "\n" \
+         "# Ask the user for the output image file name\n" \
+         "read -p \"Enter the output image file name: \" output_image\n" \
+         "\n" \
+         "# Run the command with the user inputs\n" \
+         "./OnnxStream/src/build/sd --turbo --rpi --prompt \"$user_prompt\" --steps \"$steps\" --output \"$output_image\"" \
+         > /home/run_sd.sh && \
+    chmod +x /home/run_sd.sh
+
+# Set the default command to the script
+CMD ["/bin/bash", "/home/run_sd.sh"]
