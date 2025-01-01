@@ -6,9 +6,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install dependencies
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    cmake git-lfs build-essential ca-certificates && \
+    build-essential ca-certificates git-lfs wget && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
+
+# Install updated CMake
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.25.0/cmake-3.25.0-linux-x86_64.tar.gz && \
+    tar -xvf cmake-3.25.0-linux-x86_64.tar.gz && \
+    mv cmake-3.25.0-linux-x86_64 /opt/cmake && \
+    ln -s /opt/cmake/bin/* /usr/local/bin/ && \
+    rm cmake-3.25.0-linux-x86_64.tar.gz
 
 # Define work directory
 WORKDIR /home
